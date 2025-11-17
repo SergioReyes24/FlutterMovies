@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'pokemon_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -11,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FlutterPokémon',
+      title: 'FlutterPokémon + Firebase',
       home: const PokemonScreen(),
       debugShowCheckedModeBanner: false,
     );
@@ -31,7 +36,7 @@ class _PokemonScreenState extends State<PokemonScreen> {
   final TextEditingController _controller = TextEditingController();
   String errorMessage = '';
 
-  void _getPokemon() async {
+  Future<void> _getPokemon() async {
     final name = _controller.text.trim().toLowerCase();
     if (name.isEmpty) {
       setState(() {
@@ -46,6 +51,13 @@ class _PokemonScreenState extends State<PokemonScreen> {
       setState(() {
         pokemon = data;
         errorMessage = '';
+      });
+
+      // Guardar en Firestore
+      await FirebaseFirestore.instance.collection('pokemons').add({
+        'name': data['name'],
+        'height': data['height'],
+        'timestamp': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       setState(() {
